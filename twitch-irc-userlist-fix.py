@@ -1,7 +1,9 @@
 import json
-import urllib2
+from urllib.request import urlopen
+from urllib.error import URLError
 import hexchat
 import threading
+import codecs
 
 __module_name__ = 'Twitch IRC Userlist Fix'
 __module_description__ = 'XChat/HexChat plugin that periodically retrieves the userlist for all joined channels on the Twitch IRC servers from their website. This plugin is needed for some smaller channels in which the IRC server does not respond properly to userlist requests, causing the userlist in the clients to stay empty.'
@@ -65,11 +67,12 @@ def retrieve_userlist_update_callback(userdata):
 
 def retrieve_userlist_update_thread(url, channel_key):
     try:
-        response = urllib2.urlopen(url)
-    except urllib2.URLError:
+        response = urlopen(url)
+    except URLError:
         return
 
-    userlist = json.load(response)['chatters']
+    reader = codecs.getreader("utf-8")
+    userlist = json.load(reader(response))['chatters']
     with userlists_updates_lock:
         userlists_updates[channel_key] = userlist
 
@@ -174,4 +177,4 @@ if __name__ == '__main__':
     ]
 
     hexchat.hook_unload(unload_callback, hooks)
-    print __module_name__, __module_version__, 'loaded successfully.'
+    print (__module_name__, __module_version__, 'loaded successfully.')
